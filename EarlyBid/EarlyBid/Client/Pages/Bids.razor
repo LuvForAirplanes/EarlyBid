@@ -1,0 +1,95 @@
+﻿@page "/bids"
+@using EarlyBid.Shared.Models
+@using EarlyBid.Shared.ViewModels
+@inject HttpClient Http
+
+@if (bids == null)
+{
+    <h2>Loading...</h2>
+}
+else
+{
+    <table class="ui celled table">
+        <thead>
+            <tr>
+                <th>Bidder</th>
+                <th>Sticker Number</th>
+                <th>Start</th>
+                <th>End</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var bid in bids)
+            {
+                <tr>
+                    <td>
+                        <input @bind="bid.BidderNumber" />
+                    </td>
+                    <td>
+                        <input @bind="bid.StickerNumber" />
+                    </td>
+                    <td>
+                        <input @bind="bid.StartingPrice" />
+                    </td>
+                    <td>
+                        <input @bind="bid.EndPrice" />
+                    </td>
+                    <td class="collapsing">
+                        @if (bid.IsChange)
+                        {
+                            <button class="ui fluid tertiary button" @onclick="@(async () => await UpdateBidAsync(bid))">
+                                <i class="green checkmark icon"></i>
+                            </button>
+                        }
+                        <button class="ui fluid tertiary button" @onclick="@(async () => await DeleteBidAsync(bid.Id))">
+                            <i class="red trash alternate icon"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+            <tr>
+                <td colspan="5">
+                    <button class="ui fluid tertiary button" @onclick="@(async () => await CreateBid())">Add a bid</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+}
+
+@code {
+    BidEdit[] bids;
+    protected override async Task OnInitializedAsync()
+    {
+        bids = await Http.GetJsonAsync<BidEdit[]>("api/bids");
+    }
+
+    protected async Task CreateBid()
+    {
+        var bid = new Bid();
+        bid.Id = Guid.NewGuid().ToString();
+
+        await Http.PostJsonAsync("api/bids", bid);
+
+        bids = await Http.GetJsonAsync<BidEdit[]>("api/bids");
+    }
+
+    protected async Task DeleteBidAsync(string id)
+    {
+        await Http.DeleteAsync("api/bids/" + id);
+
+        bids = await Http.GetJsonAsync<BidEdit[]>("api/bids");
+    }
+
+    protected async Task UpdateBidAsync(BidEdit bid)
+    {
+        await Http.PutJsonAsync("api/bids", bid);
+
+        bids = await Http.GetJsonAsync<BidEdit[]>("api/bids");
+    }
+
+    protected async void SetStateAsync(BidEdit bid)
+    {
+        bid.IsChange = true;
+    }
+}

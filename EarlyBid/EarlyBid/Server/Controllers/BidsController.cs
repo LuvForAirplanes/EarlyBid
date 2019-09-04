@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using EarlyBid.Server.Services;
 using EarlyBid.Shared.Models;
+using EarlyBid.Shared.ViewModels;
 
 namespace EarlyBid.Server.Controllers
 {
@@ -17,12 +18,14 @@ namespace EarlyBid.Server.Controllers
         private readonly ILogger<BidsController> logger;
         private readonly BidService bidService;
         private readonly AuctionsService auctionsService;
+        private readonly BidEditMapper bidEditMapper;
 
-        public BidsController(ILogger<BidsController> logger, BidService bidService, AuctionsService auctionsService)
+        public BidsController(ILogger<BidsController> logger, BidService bidService, AuctionsService auctionsService, BidEditMapper bidEditMapper)
         {
             this.logger = logger;
             this.bidService = bidService;
             this.auctionsService = auctionsService;
+            this.bidEditMapper = bidEditMapper;
         }
 
         [HttpGet("{id}")]
@@ -36,18 +39,29 @@ namespace EarlyBid.Server.Controllers
         {
             var currentAuction = await auctionsService.CurrentAuctionAsync();
 
-            return Ok(await bidService.GetBidsForAuctionAsync(currentAuction.Id));
+            var bids = await bidService.GetBidsForAuctionAsync(currentAuction.Id);
+            var mappedList = new List<BidEdit>();
+
+            foreach (var bid in bids)
+                mappedList.Add(bidEditMapper.Map(bid));
+
+            return Ok(mappedList);
         }
 
         [HttpPost]
         public async Task<IActionResult> PostAsync([FromBody]Bid bid)
         {
+            var auction = await auctionsService.CurrentAuctionAsync();
+
+            bid.AuctionId = auction.Id;
+            bid.Created = DateTime.Now;
             return Ok(await bidService.CreateAsync(bid));
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAsync(string id, [FromBody]Bid bid)
         {
+            bid.Updated = DateTime.Now;
             return Ok(await bidService.UpdateAsync(bid, id));
         }
 

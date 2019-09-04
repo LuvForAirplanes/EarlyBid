@@ -1,5 +1,6 @@
 using EarlyBid.Server.Data;
 using EarlyBid.Server.Services;
+using EarlyBid.Shared.ViewModels;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -42,6 +43,8 @@ namespace EarlyBid.Server
             services.AddScoped<SeedDataService>();
             services.AddScoped<AuctionsService>();
             services.AddScoped<BidService>();
+
+            services.AddScoped<BidEditMapper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

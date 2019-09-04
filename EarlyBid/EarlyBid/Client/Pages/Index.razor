@@ -1,7 +1,78 @@
 ﻿@page "/"
+@using EarlyBid.Shared.Models
+@using EarlyBid.Shared.ViewModels
+@inject HttpClient Http
 
-<h1>Hello, world!</h1>
+@if (auctions == null)
+{
+    <h2>Loading...</h2>
+}
+else
+{
+    <table class="ui celled table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var auction in auctions)
+            {
+                <tr>
+                    <td>@(auction.Created.Day + "/" + auction.Created.Month + "/" + auction.Created.Year + " (" + auction.Created.Hour + ":" + auction.Created.Minute + ")")</td>
+                    <td class="collapsing">
+                        <div class="ui checkbox">
+                            <input type="checkbox" @bind="auction.IsActive" @onclick="@(async () => await ChangeAuctionAsync(auction.Id))" />
+                            <label></label>
+                        </div>
+                    </td>
+                    <td class="collapsing">
+                        <button class="ui ui fluid tertiary button" @onclick="@(async () => await DeleteAuctionAsync(auction.Id))">
+                            <i class="red trash alternate icon"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+            <tr>
+                <td colspan="3">
+                    <button class="ui fluid tertiary button" @onclick="@(async () => await CreateAuction())">Add an auction</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+}
 
-Welcome to your new app.
+@code {
+    Auction[] auctions;
+    protected override async Task OnInitializedAsync()
+    {
+        auctions = await Http.GetJsonAsync<Auction[]>("api/auctions");
+    }
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+    protected async Task ChangeAuctionAsync(string id)
+    {
+        var auction = new Auction();
+        await Http.PostJsonAsync("api/auctions/active/" + id, auction);
+        auctions = await Http.GetJsonAsync<Auction[]>("api/auctions");
+    }
+
+    protected async Task CreateAuction()
+    {
+        var auction = new Auction();
+        auction.Id = Guid.NewGuid().ToString();
+
+        await Http.PostJsonAsync("api/auctions", auction);
+        await Http.PostJsonAsync("api/auctions/active/" + auction.Id, auction);
+
+        auctions = await Http.GetJsonAsync<Auction[]>("api/auctions");
+    }
+
+    protected async Task DeleteAuctionAsync(string id)
+    {
+        await Http.DeleteAsync("api/auctions/" + id);
+
+        auctions = await Http.GetJsonAsync<Auction[]>("api/auctions");
+    }
+}

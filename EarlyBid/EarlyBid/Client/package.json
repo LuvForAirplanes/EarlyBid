@@ -1,0 +1,16 @@
+{
+  "name": "client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "buildDevelopment": "webpack --config webpack.dev.js",
+    "buildCheckProduction": "webpack --config webpack.prod.js --env.production --progress --json > stats.json",
+    "buildProduction": "webpack --config webpack.prod.js --env.production"
+  },
+  "author": "Micah Stauffer",
+  "license": "ISC",
+  "dependencies": {
+    "fomantic-ui": "^2.7.7"
+  }
+}

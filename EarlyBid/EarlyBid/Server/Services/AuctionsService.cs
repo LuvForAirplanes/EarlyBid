@@ -16,5 +16,10 @@ namespace EarlyBid.Server.Services
         {
             return await context.Auction.FirstOrDefaultAsync(a => a.IsActive);
         }
-    }
+
+        public override async Task<List<Auction>> ListAsync()
+        {
+            return (await base.ListAsync()).OrderBy(a => a.Created).ToList();
+        }
+    } 
 }

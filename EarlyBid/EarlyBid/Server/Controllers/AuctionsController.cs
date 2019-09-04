@@ -67,12 +67,14 @@ namespace EarlyBid.Server.Controllers
         [HttpPost]
         public async Task<IActionResult> PostAsync([FromBody]Auction auction)
         {
+            auction.Created = DateTime.Now;
             return Ok(await auctionsService.CreateAsync(auction));
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAsync(string id, [FromBody]Auction auction)
         {
+            auction.Updated = DateTime.Now;
             return Ok(await auctionsService.UpdateAsync(auction, id));
         }
 
