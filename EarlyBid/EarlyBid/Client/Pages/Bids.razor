@@ -3,17 +3,29 @@
 @using EarlyBid.Shared.ViewModels
 @inject HttpClient Http
 
+<style>
+    .number-fields,
+    .price-fields {
+        width:50px;
+    }
+
+    .description-fields {
+        width:100%;
+    }
+</style>
+
 @if (bids == null)
 {
     <h2>Loading...</h2>
 }
 else
 {
-    <table class="ui celled table">
+    <table class="ui celled editable table">
         <thead>
             <tr>
                 <th>Bidder</th>
                 <th>Sticker Number</th>
+                <th>Description</th>
                 <th>Start</th>
                 <th>End</th>
                 <th></th>
@@ -23,17 +35,22 @@ else
             @foreach (var bid in bids)
             {
                 <tr>
-                    <td>
-                        <input @bind="bid.BidderNumber" />
+                    <td class="collapsing">
+                        <input class="square no border number-fields" @bind="bid.BidderNumber" @oninput="@(async () => await SetStateAsync(bid))" />
+                    </td>
+                    <td class="collapsing">
+                        <input class="square no border number-fields" @bind="bid.StickerNumber" @oninput="@(async () => await SetStateAsync(bid))" />
                     </td>
                     <td>
-                        <input @bind="bid.StickerNumber" />
+                        <input class="square no border description-fields" @bind="bid.Description" @oninput="@(async () => await SetStateAsync(bid))" />
                     </td>
-                    <td>
-                        <input @bind="bid.StartingPrice" />
+                    <td class="collapsing">
+                        <span>$</span>
+                        <input class="square no border price-fields" @bind="bid.StartingPrice" @oninput="@(async () => await SetStateAsync(bid))" />
                     </td>
-                    <td>
-                        <input @bind="bid.EndPrice" />
+                    <td class="collapsing">
+                        <span>$</span>
+                        <input class="square no border price-fields" @bind="bid.EndPrice" @oninput="@(async () => await SetStateAsync(bid))" />
                     </td>
                     <td class="collapsing">
                         @if (bid.IsChange)
@@ -49,7 +66,7 @@ else
                 </tr>
             }
             <tr>
-                <td colspan="5">
+                <td colspan="6">
                     <button class="ui fluid tertiary button" @onclick="@(async () => await CreateBid())">Add a bid</button>
                 </td>
             </tr>
@@ -83,12 +100,12 @@ else
 
     protected async Task UpdateBidAsync(BidEdit bid)
     {
-        await Http.PutJsonAsync("api/bids", bid);
+        await Http.PutJsonAsync("api/bids/" + bid.Id, bid);
 
         bids = await Http.GetJsonAsync<BidEdit[]>("api/bids");
     }
 
-    protected async void SetStateAsync(BidEdit bid)
+    protected async Task SetStateAsync(BidEdit bid)
     {
         bid.IsChange = true;
     }

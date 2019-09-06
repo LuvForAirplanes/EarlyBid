@@ -13,6 +13,7 @@ else
         <thead>
             <tr>
                 <th>Date</th>
+                <th>Name</th>
                 <th></th>
                 <th></th>
             </tr>
@@ -21,7 +22,8 @@ else
             @foreach (var auction in auctions)
             {
                 <tr>
-                    <td>@(auction.Created.Day + "/" + auction.Created.Month + "/" + auction.Created.Year + " (" + auction.Created.Hour + ":" + auction.Created.Minute + ")")</td>
+                    <td>@(auction.Created.ToShortDateString() + " (" + auction.Created.ToShortTimeString() + ")")</td>
+                    <td>@auction.Name</td>
                     <td class="collapsing">
                         <div class="ui checkbox">
                             <input type="checkbox" @bind="auction.IsActive" @onclick="@(async () => await ChangeAuctionAsync(auction.Id))" />
@@ -36,8 +38,13 @@ else
                 </tr>
             }
             <tr>
-                <td colspan="3">
-                    <button class="ui fluid tertiary button" @onclick="@(async () => await CreateAuction())">Add an auction</button>
+                <td colspan="4">
+                    <div class="flex-row">
+                        <div class="ui borderless input">
+                            <input @bind="newDate" type="date" />
+                        </div>
+                        <button class="ui fluid tertiary button" @onclick="@(async () => await CreateAuction())">Add an auction</button>
+                    </div>
                 </td>
             </tr>
         </tbody>
@@ -45,7 +52,9 @@ else
 }
 
 @code {
-    Auction[] auctions;
+        Auction[] auctions;
+        DateTime newDate = DateTime.Now;
+
     protected override async Task OnInitializedAsync()
     {
         auctions = await Http.GetJsonAsync<Auction[]>("api/auctions");
@@ -60,9 +69,13 @@ else
 
     protected async Task CreateAuction()
     {
-        var auction = new Auction();
-        auction.Id = Guid.NewGuid().ToString();
-
+        var auction = new Auction()
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = "Hoovers Auction " + DateTime.Now.ToShortDateString(),
+            Created = newDate
+        };
+        
         await Http.PostJsonAsync("api/auctions", auction);
         await Http.PostJsonAsync("api/auctions/active/" + auction.Id, auction);
 

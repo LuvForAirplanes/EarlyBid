@@ -14,3 +14,29 @@
 .ui.vertical.menu {
     font-size: 20px !important;
 }
+
+.no.border {
+    border: none !important;
+}
+
+.square {
+    border-radius: 0 !important;
+}
+
+.ui.editable.table td {
+    padding: 0 0 0 10px;
+}
+
+    .ui.editable.table input,
+    .ui.editable.table .ui.selection,
+    .ui.editable.table th button,
+    .ui.editable.table td button {
+        border: 0;
+        background: none;
+        box-shadow: none;
+    }
+
+.borderless,
+.borderless > input {
+    border: none !important;
+}
