@@ -2,6 +2,13 @@
 @using EarlyBid.Shared.Models
 @using EarlyBid.Shared.ViewModels
 @inject HttpClient Http
+@inject IJSRuntime JsRuntime;
+
+<style>
+    .auction-name {
+        width: 250px;
+    }
+</style>
 
 @if (auctions == null)
 {
@@ -9,7 +16,7 @@
 }
 else
 {
-    <table class="ui celled table">
+    <table class="ui celled editable table">
         <thead>
             <tr>
                 <th>Date</th>
@@ -23,7 +30,9 @@ else
             {
                 <tr>
                     <td>@(auction.Created.ToShortDateString() + " (" + auction.Created.ToShortTimeString() + ")")</td>
-                    <td>@auction.Name</td>
+                    <td>
+                        <input class="auction-name" @bind="auction.Name" @oninput="@(async () => await SetStateAsync(auction))" />
+                    </td>
                     <td class="collapsing">
                         <div class="ui checkbox">
                             <input type="checkbox" @bind="auction.IsActive" @onclick="@(async () => await ChangeAuctionAsync(auction.Id))" />
@@ -31,6 +40,12 @@ else
                         </div>
                     </td>
                     <td class="collapsing">
+                        @if (auction.IsChanged)
+                        {
+                            <button class="ui fluid tertiary button" @onclick="@(async () => await UpdateAuctionAsync(auction))">
+                                <i class="green checkmark icon"></i>
+                            </button>
+                        }
                         <button class="ui ui fluid tertiary button" @onclick="@(async () => await DeleteAuctionAsync(auction.Id))">
                             <i class="red trash alternate icon"></i>
                         </button>
@@ -52,40 +67,60 @@ else
 }
 
 @code {
-        Auction[] auctions;
-        DateTime newDate = DateTime.Now;
+    static AuctionEdit[] auctions;
+    DateTime newDate = DateTime.Now;
 
     protected override async Task OnInitializedAsync()
     {
-        auctions = await Http.GetJsonAsync<Auction[]>("api/auctions");
+        await LoadListAsync();
     }
 
     protected async Task ChangeAuctionAsync(string id)
     {
-        var auction = new Auction();
+        var auction = new AuctionEdit();
         await Http.PostJsonAsync("api/auctions/active/" + id, auction);
-        auctions = await Http.GetJsonAsync<Auction[]>("api/auctions");
+
+        await LoadListAsync();
     }
 
     protected async Task CreateAuction()
     {
-        var auction = new Auction()
+        var auction = new AuctionEdit()
         {
             Id = Guid.NewGuid().ToString(),
             Name = "Hoovers Auction " + DateTime.Now.ToShortDateString(),
             Created = newDate
         };
-        
+
         await Http.PostJsonAsync("api/auctions", auction);
         await Http.PostJsonAsync("api/auctions/active/" + auction.Id, auction);
 
-        auctions = await Http.GetJsonAsync<Auction[]>("api/auctions");
+        await ReloadDate();
+        await LoadListAsync();
     }
 
     protected async Task DeleteAuctionAsync(string id)
     {
         await Http.DeleteAsync("api/auctions/" + id);
+        await ReloadDate();
+        await LoadListAsync();
+    }
 
-        auctions = await Http.GetJsonAsync<Auction[]>("api/auctions");
+    protected async Task UpdateAuctionAsync(AuctionEdit auction)
+    {
+        await Http.PutJsonAsync("api/auctions/" + auction.Id, auction);
+        await ReloadDate();
+        await LoadListAsync();
+    }
+
+    protected async Task SetStateAsync(AuctionEdit auction) =>
+        auction.IsChanged = true;
+
+    public async Task LoadListAsync() =>
+        auctions = await Http.GetJsonAsync<AuctionEdit[]>("api/auctions");
+
+    async Task ReloadDate()
+    {
+        var text = await JsRuntime.InvokeAsync<string>("newAuction");
     }
 }

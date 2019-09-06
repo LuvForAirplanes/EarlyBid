@@ -1,4 +1,5 @@
 using EarlyBid.Server.Data;
+using EarlyBid.Server.Hubs;
 using EarlyBid.Server.Services;
 using EarlyBid.Shared.ViewModels;
 using Microsoft.AspNetCore.Builder;
@@ -40,11 +41,11 @@ namespace EarlyBid.Server
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(connectionString));
 
+            services.AddSignalR();
+
             services.AddScoped<SeedDataService>();
             services.AddScoped<AuctionsService>();
             services.AddScoped<BidService>();
-
-            services.AddScoped<BidEditMapper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -67,6 +68,7 @@ namespace EarlyBid.Server
             {
                 endpoints.MapDefaultControllerRoute();
                 endpoints.MapFallbackToClientSideBlazor<Client.Startup>("index.html");
+                endpoints.MapHub<AuctionHub>("/auctions");
             });
         }
     }

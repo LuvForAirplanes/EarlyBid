@@ -49,7 +49,7 @@ namespace EarlyBid.Server
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                .UseUrls("http://*:80")
+                .UseUrls("http://*:32981")
                 .UseStartup<Startup>();
     }
 }

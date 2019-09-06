@@ -8,7 +8,6 @@ namespace EarlyBid.Client
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddScoped<BidEditMapper>();
         }
 
         public void Configure(IComponentsApplicationBuilder app)

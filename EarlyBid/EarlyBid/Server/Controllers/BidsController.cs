@@ -18,14 +18,12 @@ namespace EarlyBid.Server.Controllers
         private readonly ILogger<BidsController> logger;
         private readonly BidService bidService;
         private readonly AuctionsService auctionsService;
-        private readonly BidEditMapper bidEditMapper;
 
-        public BidsController(ILogger<BidsController> logger, BidService bidService, AuctionsService auctionsService, BidEditMapper bidEditMapper)
+        public BidsController(ILogger<BidsController> logger, BidService bidService, AuctionsService auctionsService)
         {
             this.logger = logger;
             this.bidService = bidService;
             this.auctionsService = auctionsService;
-            this.bidEditMapper = bidEditMapper;
         }
 
         [HttpGet("{id}")]
@@ -40,12 +38,12 @@ namespace EarlyBid.Server.Controllers
             var currentAuction = await auctionsService.CurrentAuctionAsync();
 
             var bids = await bidService.GetBidsForAuctionAsync(currentAuction.Id);
-            var mappedList = new List<BidEdit>();
+            //var mappedList = new List<BidEdit>();
 
-            foreach (var bid in bids)
-                mappedList.Add(bidEditMapper.Map(bid));
+            //foreach (var bid in bids)
+            //    mappedList.Add(bidEditMapper.Map(bid));
 
-            return Ok(mappedList);
+            return Ok(bids);
         }
 
         [HttpPost]

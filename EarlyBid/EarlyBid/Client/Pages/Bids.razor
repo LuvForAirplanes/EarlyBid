@@ -53,7 +53,7 @@ else
                         <input class="square no border price-fields" @bind="bid.EndPrice" @oninput="@(async () => await SetStateAsync(bid))" />
                     </td>
                     <td class="collapsing">
-                        @if (bid.IsChange)
+                        @if (bid.IsChanged)
                         {
                             <button class="ui fluid tertiary button" @onclick="@(async () => await UpdateBidAsync(bid))">
                                 <i class="green checkmark icon"></i>
@@ -107,6 +107,6 @@ else
 
     protected async Task SetStateAsync(BidEdit bid)
     {
-        bid.IsChange = true;
+        bid.IsChanged = true;
     }
 }

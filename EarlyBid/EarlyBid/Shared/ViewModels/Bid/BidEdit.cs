@@ -7,6 +7,6 @@ namespace EarlyBid.Shared.ViewModels
 {
     public class BidEdit : Bid
     {
-        public bool IsChange { get; set; }
+        public bool IsChanged { get; set; }
     }
 }

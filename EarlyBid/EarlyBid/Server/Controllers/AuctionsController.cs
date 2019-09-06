@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using EarlyBid.Server.Services;
 using EarlyBid.Shared.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace EarlyBid.Server.Controllers
 {
@@ -50,17 +51,7 @@ namespace EarlyBid.Server.Controllers
         [HttpPost("active/{auctionId}")]
         public async Task<IActionResult> PostActiveAuctionAsync(string auctionId)
         {
-            var auctions = await auctionsService.ListAsync();
-            foreach (var auction in auctions)
-            {
-                auction.IsActive = false;
-                await auctionsService.UpdateAsync(auction, auction.Id);
-            }
-
-            var activeAuction = await auctionsService.GetByIdAsync(auctionId);
-            activeAuction.IsActive = true;
-            await auctionsService.UpdateAsync(activeAuction, activeAuction.Id);
-
+            await SetAuctionActiveAsync(auctionId);
             return Ok(await auctionsService.ListAsync());
         }
 
@@ -81,7 +72,25 @@ namespace EarlyBid.Server.Controllers
         public async Task<IActionResult> DeleteAsync(string id)
         {
             await auctionsService.DeleteAsync(id);
+
+            var first = await auctionsService.Get().OrderByDescending(a => a.Created).FirstOrDefaultAsync();
+            await SetAuctionActiveAsync(first.Id);
+
             return Ok("Deleted Successfully!");
+        }
+
+        public async Task SetAuctionActiveAsync(string id)
+        {
+            var auctions = await auctionsService.ListAsync();
+            foreach (var auction in auctions)
+            {
+                auction.IsActive = false;
+                await auctionsService.UpdateAsync(auction, auction.Id);
+            }
+
+            var activeAuction = await auctionsService.GetByIdAsync(id);
+            activeAuction.IsActive = true;
+            await auctionsService.UpdateAsync(activeAuction, activeAuction.Id);
         }
     }
 }
