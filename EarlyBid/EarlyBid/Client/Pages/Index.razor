@@ -68,13 +68,10 @@ else
     </table>
 }
 
-<p>@binder</p>
-
 @code {
     AuctionEdit[] auctions;
     DateTime newDate = DateTime.Now;
     HubConnection connection;
-    string binder = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -87,7 +84,7 @@ else
         }).Build(); // Build the HubConnection
         connection.On<string>("ReceivedBid", this.HandleResult);
         await connection.StartAsync(); // Start the connection.
-        connection.InvokeAsync("ReceivedBid");
+        await connection.InvokeAsync("ReceivedBid");
 
         await LoadListAsync();
     }
@@ -96,6 +93,8 @@ else
     {
         var auction = new AuctionEdit();
         await Http.PostJsonAsync("api/auctions/active/" + id, auction);
+
+        await connection.InvokeAsync("ReceivedBid");
     }
 
     protected async Task CreateAuction()
@@ -111,16 +110,21 @@ else
         await Http.PostJsonAsync("api/auctions/active/" + auction.Id, auction);
 
         await connection.InvokeAsync("ReceivedBid");
+
     }
 
     protected async Task DeleteAuctionAsync(string id)
     {
         await Http.DeleteAsync("api/auctions/" + id);
+
+        await connection.InvokeAsync("ReceivedBid");
     }
 
     protected async Task UpdateAuctionAsync(AuctionEdit auction)
     {
         await Http.PutJsonAsync("api/auctions/" + auction.Id, auction);
+
+        await connection.InvokeAsync("ReceivedBid");
     }
 
     protected async Task SetStateAsync(AuctionEdit auction) =>
@@ -129,11 +133,11 @@ else
     public async Task LoadListAsync()
     {
         auctions = await Http.GetJsonAsync<AuctionEdit[]>("api/auctions");
-        binder = "loaded list";
     }
 
     public async Task HandleResult(string args)
     {
         await LoadListAsync();
+        StateHasChanged();
     }
 }
