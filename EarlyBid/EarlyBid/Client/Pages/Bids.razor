@@ -1,16 +1,18 @@
 ﻿@page "/bids"
 @using EarlyBid.Shared.Models
 @using EarlyBid.Shared.ViewModels
+@using Blazor.Extensions;
 @inject HttpClient Http
+@inject HubConnectionBuilder hubConnectionBuilder
 
 <style>
     .number-fields,
     .price-fields {
-        width:50px;
+        width: 50px;
     }
 
     .description-fields {
-        width:100%;
+        width: 100%;
     }
 </style>
 
@@ -76,9 +78,21 @@ else
 
 @code {
     BidEdit[] bids;
+    HubConnection connection;
     protected override async Task OnInitializedAsync()
     {
-        bids = await Http.GetJsonAsync<BidEdit[]>("api/bids");
+        // in Component Initialization code
+        connection = hubConnectionBuilder
+        .WithUrl("/auctions", // The hub URL. If the Hub is hosted on the server where the blazor is hosted, you can just use the relative path.
+        opt =>
+        {
+            opt.LogLevel = SignalRLogLevel.Trace; // Client log level
+        }).Build(); // Build the HubConnection
+        connection.On<string>("ReceivedBid", this.HandleResult);
+        await connection.StartAsync(); // Start the connection.
+        await connection.InvokeAsync("ReceivedBid");
+
+        await LoadListAsync();
     }
 
     protected async Task CreateBid()
@@ -87,26 +101,37 @@ else
         bid.Id = Guid.NewGuid().ToString();
 
         await Http.PostJsonAsync("api/bids", bid);
-
-        bids = await Http.GetJsonAsync<BidEdit[]>("api/bids");
+        
+        await connection.InvokeAsync("ReceivedBid");
     }
 
     protected async Task DeleteBidAsync(string id)
     {
         await Http.DeleteAsync("api/bids/" + id);
-
-        bids = await Http.GetJsonAsync<BidEdit[]>("api/bids");
+        
+        await connection.InvokeAsync("ReceivedBid");
     }
 
     protected async Task UpdateBidAsync(BidEdit bid)
     {
         await Http.PutJsonAsync("api/bids/" + bid.Id, bid);
-
-        bids = await Http.GetJsonAsync<BidEdit[]>("api/bids");
+        
+        await connection.InvokeAsync("ReceivedBid");
     }
 
     protected async Task SetStateAsync(BidEdit bid)
     {
         bid.IsChanged = true;
+    }
+    
+    public async Task LoadListAsync()
+    {
+        bids = await Http.GetJsonAsync<BidEdit[]>("api/bids");
+    }
+
+    public async Task HandleResult(string args)
+    {
+        await LoadListAsync();
+        StateHasChanged();
     }
 }
