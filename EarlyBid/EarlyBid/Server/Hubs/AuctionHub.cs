@@ -8,9 +8,9 @@ namespace EarlyBid.Server.Hubs
 {
     public class AuctionHub : Hub
     {
-        public async Task ReceivedBid(string user, string message)
+        public async Task ReceivedBid()
         {
-            await Clients.All.SendAsync("ReceivedBid", user, message);
+            await Clients.All.SendAsync("ReceivedBid");
         }
     }
 }

@@ -14,7 +14,7 @@ namespace EarlyBid.Server
 {
     public class Program
     {
-        private static IWebHost WebHostInstance;
+        public static IWebHost WebHostInstance;
         public static void Main(string[] args)
         {
             try

@@ -1,8 +1,10 @@
 ﻿@page "/"
 @using EarlyBid.Shared.Models
 @using EarlyBid.Shared.ViewModels
+@using Blazor.Extensions;
 @inject HttpClient Http
-@inject IJSRuntime JsRuntime;
+@inject IJSRuntime JsRuntime
+@inject HubConnectionBuilder hubConnectionBuilder
 
 <style>
     .auction-name {
@@ -66,12 +68,27 @@ else
     </table>
 }
 
+<p>@binder</p>
+
 @code {
-    static AuctionEdit[] auctions;
+    AuctionEdit[] auctions;
     DateTime newDate = DateTime.Now;
+    HubConnection connection;
+    string binder = "";
 
     protected override async Task OnInitializedAsync()
     {
+        // in Component Initialization code
+        connection = hubConnectionBuilder
+        .WithUrl("/auctions", // The hub URL. If the Hub is hosted on the server where the blazor is hosted, you can just use the relative path.
+        opt =>
+        {
+            opt.LogLevel = SignalRLogLevel.Trace; // Client log level
+        }).Build(); // Build the HubConnection
+        connection.On<string>("ReceivedBid", this.HandleResult);
+        await connection.StartAsync(); // Start the connection.
+        connection.InvokeAsync("ReceivedBid");
+
         await LoadListAsync();
     }
 
@@ -79,8 +96,6 @@ else
     {
         var auction = new AuctionEdit();
         await Http.PostJsonAsync("api/auctions/active/" + id, auction);
-
-        await LoadListAsync();
     }
 
     protected async Task CreateAuction()
@@ -95,32 +110,30 @@ else
         await Http.PostJsonAsync("api/auctions", auction);
         await Http.PostJsonAsync("api/auctions/active/" + auction.Id, auction);
 
-        await ReloadDate();
-        await LoadListAsync();
+        await connection.InvokeAsync("ReceivedBid");
     }
 
     protected async Task DeleteAuctionAsync(string id)
     {
         await Http.DeleteAsync("api/auctions/" + id);
-        await ReloadDate();
-        await LoadListAsync();
     }
 
     protected async Task UpdateAuctionAsync(AuctionEdit auction)
     {
         await Http.PutJsonAsync("api/auctions/" + auction.Id, auction);
-        await ReloadDate();
-        await LoadListAsync();
     }
 
     protected async Task SetStateAsync(AuctionEdit auction) =>
         auction.IsChanged = true;
 
-    public async Task LoadListAsync() =>
-        auctions = await Http.GetJsonAsync<AuctionEdit[]>("api/auctions");
-
-    async Task ReloadDate()
+    public async Task LoadListAsync()
     {
-        var text = await JsRuntime.InvokeAsync<string>("newAuction");
+        auctions = await Http.GetJsonAsync<AuctionEdit[]>("api/auctions");
+        binder = "loaded list";
+    }
+
+    public async Task HandleResult(string args)
+    {
+        await LoadListAsync();
     }
 }

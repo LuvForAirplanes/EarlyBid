@@ -1,3 +1,4 @@
+using Blazor.Extensions;
 using EarlyBid.Shared.ViewModels;
 using Microsoft.AspNetCore.Components.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +9,7 @@ namespace EarlyBid.Client
     {
         public void ConfigureServices(IServiceCollection services)
         {
+              services.AddTransient<HubConnectionBuilder>();
         }
 
         public void Configure(IComponentsApplicationBuilder app)

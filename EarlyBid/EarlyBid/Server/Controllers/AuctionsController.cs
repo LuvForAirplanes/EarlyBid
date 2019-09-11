@@ -8,6 +8,9 @@ using Microsoft.Extensions.Logging;
 using EarlyBid.Server.Services;
 using EarlyBid.Shared.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.SignalR;
+using EarlyBid.Server.Hubs;
 
 namespace EarlyBid.Server.Controllers
 {
@@ -58,14 +61,18 @@ namespace EarlyBid.Server.Controllers
         [HttpPost]
         public async Task<IActionResult> PostAsync([FromBody]Auction auction)
         {
-            return Ok(await auctionsService.CreateAsync(auction));
+            var create = await auctionsService.CreateAsync(auction);
+            DispatchData();
+            return Ok(create);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAsync(string id, [FromBody]Auction auction)
         {
             auction.Updated = DateTime.Now;
-            return Ok(await auctionsService.UpdateAsync(auction, id));
+            var updateed = await auctionsService.UpdateAsync(auction, id);
+            DispatchData();
+            return Ok(updateed);
         }
 
         [HttpDelete("{id}")]
@@ -91,6 +98,15 @@ namespace EarlyBid.Server.Controllers
             var activeAuction = await auctionsService.GetByIdAsync(id);
             activeAuction.IsActive = true;
             await auctionsService.UpdateAsync(activeAuction, activeAuction.Id);
+
+            DispatchData();
+        }
+
+        public void DispatchData()
+        {
+            //var scope = Program.WebHostInstance.Services.CreateScope();
+            //var hubContext = scope.ServiceProvider.GetService<IHubContext<AuctionHub>>();
+            //hubContext.Clients.All.SendAsync("ReceivedBid", "", "").Wait();
         }
     }
 }
